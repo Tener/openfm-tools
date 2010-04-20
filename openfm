@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+# -*- encoding: utf-8 -*-
+
+from urllib.request import urlopen
+import json
+from subprocess import Popen, PIPE
+import os
+import io
+import logging
+
+plsurl = 'http://open.fm/getplaylist.php'
+chanurl = 'http://gr-relay-%d.gaduradio.pl/%d'
+music_player = 'mplayer'
+dmenu_bin = 'dmenu'
+
+def getChanURL( chanID, servID = 1 ):
+    return (chanurl % (servID,chanID))
+
+def getChannels():
+    raw = urlopen(plsurl).read().decode('utf-8')
+    return ([ ((int(chan['id']),chan['title'].strip())) for chan in json.loads(raw)['open_channels']])
+
+def ask_dmenu(items):
+    inp = "\n".join(items)
+    p = Popen([dmenu_bin,"-i"], stdout=PIPE, stdin=PIPE, shell=True)
+
+    p.stdin.write(inp.encode())
+    p.stdin.close()
+
+    output = p.stdout.read().decode()
+
+    return output
+
+def main_cli():
+    chans = sorted(getChannels())
+
+def reverse_dict(dc):
+    return dict( [ (val,key) for (key,val) in dc.items() ] )
+    
+def main_dmenu():
+    chans = dict(sorted(getChannels()))
+
+    dmenu_items = []
+    for (key,val) in chans.items():
+        dmenu_items.append(str(key).lower())
+        dmenu_items.append(str(val).lower())
+
+    dmenu_dict = dict( [(str(key).lower(),key) for key in chans.keys()] +
+                       [(val.lower(),key) for (key,val) in chans.items()] )
+
+    val = ask_dmenu(dmenu_items)
+    chan = dmenu_dict.get(val)
+
+    if chan: # may be None, if the user didn't choose anything from dmenu
+        notify(chans[chan], chan)
+        url = getChanURL(chan)
+        p = Popen([music_player, url])
+        p.wait()
+        #sts = os.waitpid(p.pid, 0)[1]
+
+def notify(chan_name, chan_num):
+    print("------------------------")
+    print("Channel: %s (%d)" % (chan_name, chan_num))
+    print("------------------------")
+
+    # notify-send
+    Popen(["notify-send","--urgency=normal","--expire-time=5000","openfm : uruchomiono stację", "Uruchomiono stację %s (id:%d)" % (chan_name, chan_num)])
+
+    
+def main(mode = 'dmenu'):
+    if mode == 'dmenu':
+        main_dmenu()
+    elif mode == 'cli':
+        main_cli()
+    else:
+        print("Unknown mode: %s" % (str(mode)))
+    
+if __name__ == '__main__':
+    main()
+
+
