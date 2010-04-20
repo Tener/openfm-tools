@@ -103,9 +103,16 @@ def notify_song( song_data ):
     mins = s // 60
     duration = formatField('Duration', '{0:2}:{1:02}'.format(mins,secs))
 
+    # album image
+    icontmp = '/tmp/openfm.album_icon.png'
+    iconurl = "http://open.fm/" + song_data['album_image']
+    f = open(icontmp,'wb')
+    f.write(urlopen(iconurl).read())
+    f.close()
+
     song_desc = "\n".join( list(map( field, ['full_artist','full_title','album_title'])) + [duration])
 
-    Popen(["notify-send","--urgency=normal","--expire-time=10000","openfm : current song",song_desc]).wait()
+    Popen(["notify-send","--urgency=normal",'-i',icontmp,"--expire-time=10000","openfm : current song",song_desc]).wait()
 
 
 def song_watcher(chan_id):
