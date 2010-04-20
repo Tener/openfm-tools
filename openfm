@@ -129,6 +129,43 @@ def song_watcher(chan_id):
             old_song = curr_song
         time.sleep(1)
 
+# config
+
+def make_config_dir():
+    confPath = get_config_dir_path()
+    if not os.path.exists(confPath):
+        os.mkdir(confPath)    
+
+def get_config_path():
+    return os.path.join(get_config_dir_path(),'config')
+
+def get_config_dir_path():
+    return os.path.expanduser('~/.openfm')
+
+def read_conf():
+    confP = get_config_path()
+    if os.path.exists(confP):
+        f = open(confP,'r')
+        d = f.read()
+        f.close()
+        return eval(d)
+
+def save_last_station(chan_id):
+    conf = {}
+    conf['last_station'] = chan_id
+    
+    confPath = make_config_dir()
+    f = open(get_config_path(),'w')
+    f.write(str( conf ) )
+    f.close()
+
+def get_last_station():
+    conf = read_conf()
+    if conf:
+        return conf.get('last_station')
+
+# main
+
 def main(mode = 'dmenu'):
     if mode == 'dmenu':
         main_dmenu()
