@@ -1,0 +1,29 @@
+Currently there is only one script, "openfm", that resides in this project.
+
+You are encouraged to copy and edit it, to suit your needs.
+There is (currently) no way to specify any options at command line, that's why you need to edit it.
+
+------------
+REQUIREMENTS
+------------
+1. mplayer (any other similar command will do)
+2. dmenu (use your package manager to get it or google for sources)
+3. send-notify (most likely you already have it on modern Linux)
+4. python 3.*
+
+------------
+INSTALLATION
+------------
+
+1. Download and make sure it's in your PATH
+2. Customize the program by editing the source code
+3. Run 'openfm'
+
+----
+TODO
+----
+
+1. Implement CLI
+2. Add getopt for option parsing
+3. Implement some options, like for subsituting 'mplayer' with different program.
+4. Add --help
