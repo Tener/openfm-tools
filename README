@@ -27,3 +27,4 @@ TODO
 2. Add getopt for option parsing
 3. Implement some options, like for subsituting 'mplayer' with different program.
 4. Add --help
+5. Error handling
