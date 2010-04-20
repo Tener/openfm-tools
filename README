@@ -10,6 +10,7 @@ REQUIREMENTS
 2. dmenu (use your package manager to get it or google for sources)
 3. send-notify (most likely you already have it on modern Linux)
 4. python 3.*
+5. ImageMagick (for resizing of album images)
 
 ------------
 INSTALLATION
