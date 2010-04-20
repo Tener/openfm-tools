@@ -7,6 +7,10 @@ from subprocess import Popen, PIPE
 import os
 import io
 import logging
+import time
+import datetime
+
+from multiprocessing import Process
 
 plsurl = 'http://open.fm/getplaylist.php'
 chanurl = 'http://gr-relay-%d.gaduradio.pl/%d'
@@ -15,6 +19,12 @@ dmenu_bin = 'dmenu'
 
 def getChanURL( chanID, servID = 1 ):
     return (chanurl % (servID,chanID))
+
+def getCurrSong( chanID ):
+    raw = urlopen(plsurl).read().decode('utf-8')
+    chans = dict( [ (int(chan['id']), chan) for chan in json.loads(raw)['open_channels']] )
+    curr_song = chans[chanID]['current_song']
+    return curr_song
 
 def getChannels():
     raw = urlopen(plsurl).read().decode('utf-8')
@@ -54,8 +64,16 @@ def main_dmenu():
     if chan: # may be None, if the user didn't choose anything from dmenu
         notify(chans[chan], chan)
         url = getChanURL(chan)
+
+        sw = Process( target=song_watcher, args=(chan,) )
+        sw.start()
+        
         p = Popen([music_player, url])
         p.wait()
+
+        sw.terminate()
+
+
         #sts = os.waitpid(p.pid, 0)[1]
 
 def notify(chan_name, chan_num):
@@ -65,6 +83,43 @@ def notify(chan_name, chan_num):
 
     # notify-send
     Popen(["notify-send","--urgency=normal","--expire-time=5000","openfm : uruchomiono stację", "Uruchomiono stację %s (id:%d)" % (chan_name, chan_num)])
+
+def notify_song( song_data ):
+    def field(name):
+        val = song_data[name]
+        niceName = name.replace('_',' ').capitalize()
+        return formatField(niceName, val)
+
+    def formatField( name, val ):
+        return "<b>{0}</b> : <i>{1}</i>".format( name, val )
+
+    def parseDate(field):
+        return datetime.datetime.strptime(song_data[field],'%Y-%m-%d %H:%M:%S')
+
+    # song duration
+    start,stop = parseDate('play_begin'),parseDate('play_end')
+    s = (stop-start).seconds
+    secs = s % 60
+    mins = s // 60
+    duration = formatField('Duration', '{0:2}:{1:02}'.format(mins,secs))
+
+    song_desc = "\n".join( list(map( field, ['full_artist','full_title','album_title'])) + [duration])
+
+    Popen(["notify-send","--urgency=normal","--expire-time=10000","openfm : current song",song_desc]).wait()
+
+
+def song_watcher(chan_id):
+    old_song = None
+    while True:
+        curr_song = getCurrSong(chan_id)
+        if curr_song != old_song:
+            notify_song( curr_song )
+            old_song = curr_song
+        for (key,val) in sorted(curr_song.items()):
+            print(">>> %s : %s" % (key,val))
+        time.sleep(11)
+
+        
 
     
 def main(mode = 'dmenu'):
