@@ -17,6 +17,8 @@ chanurl = 'http://gr-relay-%d.gaduradio.pl/%d'
 music_player = 'mplayer'
 dmenu_bin = 'dmenu'
 
+# urls
+
 def getChanURL( chanID, servID = 1 ):
     return (chanurl % (servID,chanID))
 
@@ -30,6 +32,8 @@ def getChannels():
     raw = urlopen(plsurl).read().decode('utf-8')
     return ([ ((int(chan['id']),chan['title'].strip())) for chan in json.loads(raw)['open_channels']])
 
+# dmenu
+
 def ask_dmenu(items):
     inp = "\n".join(items)
     p = Popen([dmenu_bin,"-i"], stdout=PIPE, stdin=PIPE, shell=True)
@@ -41,51 +45,7 @@ def ask_dmenu(items):
 
     return output
 
-def main_cli():
-    chans = sorted(getChannels())
-
-#def reverse_dict(dc):
-#    return dict( [ (val,key) for (key,val) in dc.items() ] )
-    
-def main_dmenu():
-    chans = dict(sorted(getChannels()))
-
-    dmenu_items = []
-    for (key,val) in chans.items():
-        dmenu_items.append(str(key).lower())
-        dmenu_items.append(str(val).lower())
-
-    dmenu_dict = dict( [(str(key).lower(),key) for key in chans.keys()] +
-                       [(val.lower(),key) for (key,val) in chans.items()] )
-
-    # last station
-    last = get_last_station()
-    if last:
-        item = 'LAST_STATION:%d' % last
-        dmenu_items.insert(0,item)
-        dmenu_dict[item] = last
-    
-    val = ask_dmenu(dmenu_items)
-    chan = dmenu_dict.get(val)
-
-    if chan: # may be None, if the user didn't choose anything from dmenu
-        save_last_station(chan) # save chan
-        
-
-        # notify about channel
-        notify(chans[chan], chan)
-        url = getChanURL(chan)
-
-        # song watcher -  notification on song change
-        sw = Process( target=song_watcher, args=(chan,) )
-        sw.start()
-
-        # run media player
-        p = Popen([music_player, url])
-        p.wait()
-
-        # cleanup
-        sw.terminate()
+# notifications
 
 def notify(chan_name, chan_num):
     print("------------------------")
@@ -176,7 +136,6 @@ def get_last_station():
         return conf.get('last_station')
 
 # main
-
 def main(mode = 'dmenu'):
     if mode == 'dmenu':
         main_dmenu()
@@ -184,8 +143,56 @@ def main(mode = 'dmenu'):
         main_cli()
     else:
         print("Unknown mode: %s" % (str(mode)))
+
+def main_cli():
+    chans = sorted(getChannels())
+
+#def reverse_dict(dc):
+#    return dict( [ (val,key) for (key,val) in dc.items() ] )
+    
+def main_dmenu():
+    chans = dict(sorted(getChannels()))
+
+    dmenu_items = []
+    for (key,val) in chans.items():
+        dmenu_items.append(str(key).lower())
+        dmenu_items.append(str(val).lower())
+
+    dmenu_dict = dict( [(str(key).lower(),key) for key in chans.keys()] +
+                       [(val.lower(),key) for (key,val) in chans.items()] )
+
+    # last station
+    last = get_last_station()
+    if last:
+        item = 'LAST_STATION:%d' % last
+        dmenu_items.insert(0,item)
+        dmenu_dict[item] = last
+    
+    val = ask_dmenu(dmenu_items)
+    chan = dmenu_dict.get(val)
+
+    if chan: # may be None, if the user didn't choose anything from dmenu
+        save_last_station(chan) # save chan
+        
+
+        # notify about channel
+        notify(chans[chan], chan)
+        url = getChanURL(chan)
+
+        # song watcher -  notification on song change
+        sw = Process( target=song_watcher, args=(chan,) )
+        sw.start()
+
+        # run media player
+        p = Popen([music_player, url])
+        p.wait()
+
+        # cleanup
+        sw.terminate()
+
+
+
     
 if __name__ == '__main__':
     main()
-
 
