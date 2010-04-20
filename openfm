@@ -58,23 +58,34 @@ def main_dmenu():
     dmenu_dict = dict( [(str(key).lower(),key) for key in chans.keys()] +
                        [(val.lower(),key) for (key,val) in chans.items()] )
 
+    # last station
+    last = get_last_station()
+    if last:
+        item = 'LAST_STATION:%d' % last
+        dmenu_items.insert(0,item)
+        dmenu_dict[item] = last
+    
     val = ask_dmenu(dmenu_items)
     chan = dmenu_dict.get(val)
 
     if chan: # may be None, if the user didn't choose anything from dmenu
+        save_last_station(chan) # save chan
+        
+
+        # notify about channel
         notify(chans[chan], chan)
         url = getChanURL(chan)
 
+        # song watcher -  notification on song change
         sw = Process( target=song_watcher, args=(chan,) )
         sw.start()
-        
+
+        # run media player
         p = Popen([music_player, url])
         p.wait()
 
+        # cleanup
         sw.terminate()
-
-
-        #sts = os.waitpid(p.pid, 0)[1]
 
 def notify(chan_name, chan_num):
     print("------------------------")
