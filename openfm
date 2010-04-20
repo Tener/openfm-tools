@@ -122,11 +122,9 @@ def song_watcher(chan_id):
         if curr_song != old_song:
             notify_song( curr_song )
             old_song = curr_song
-        for (key,val) in sorted(curr_song.items()):
-            print(">>> %s : %s" % (key,val))
-        time.sleep(11)
+        time.sleep(1)
 
-        
+       
 
     
 def main(mode = 'dmenu'):
