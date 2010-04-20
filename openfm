@@ -44,8 +44,8 @@ def ask_dmenu(items):
 def main_cli():
     chans = sorted(getChannels())
 
-def reverse_dict(dc):
-    return dict( [ (val,key) for (key,val) in dc.items() ] )
+#def reverse_dict(dc):
+#    return dict( [ (val,key) for (key,val) in dc.items() ] )
     
 def main_dmenu():
     chans = dict(sorted(getChannels()))
